@@ -1,9 +1,8 @@
 package com.example.nhaydel.naxosscanner;
 
+import android.content.Intent;
 import android.graphics.Camera;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -13,89 +12,47 @@ import android.view.SurfaceView;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.android.gms.vision.CameraSource;
 import com.google.android.gms.vision.Detector;
 import com.google.android.gms.vision.barcode.Barcode;
 import com.google.android.gms.vision.barcode.BarcodeDetector;
+import com.google.zxing.integration.android.IntentIntegrator;
+import com.google.zxing.integration.android.IntentResult;
+import com.journeyapps.barcodescanner.CaptureActivity;
 
 import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity{
-    SurfaceView cameraView;
     TextView barcodeInfo;
-    BarcodeDetector mBarcodeDetector;
-    CameraSource mCameraSource;
+    Button mScanButton;
+    IntentIntegrator integrator = new IntentIntegrator(this);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        cameraView = (SurfaceView)findViewById(R.id.camera_view);
-        barcodeInfo = (TextView)findViewById(R.id.code_info);
+        mScanButton = (Button) findViewById(R.id.scanButton);
 
+        mScanButton.setOnClickListener(new View.OnClickListener(){
+            public void onClick(View v){
+                integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
+                integrator.setPrompt("Scan a barcode");
+                integrator.setCameraId(0);  // Use a specific camera of the device
+                integrator.setOrientationLocked(false);
+                integrator.setCaptureActivity(CaptureActivityPortrait.class);
+                integrator.setBeepEnabled(false);
+                integrator.initiateScan();
+            }
+        });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
+        barcodeInfo = (TextView) findViewById(R.id.code_info);
 
-        mBarcodeDetector =
-                new BarcodeDetector.Builder(this)
-                        .setBarcodeFormats(Barcode.EAN_13)
-                        .build();
-
-        mCameraSource = new CameraSource
-                .Builder(this, mBarcodeDetector)
-                .setRequestedPreviewSize(640, 480)
-                .build();
-        cameraView.getHolder().addCallback(new SurfaceHolder.Callback() {
-            @Override
-            public void surfaceCreated(SurfaceHolder holder) {
-                try {
-                    mCameraSource.start(cameraView.getHolder());
-                } catch (IOException ie) {
-                    Log.e("CAMERA SOURCE", ie.getMessage());
-                }
-            }
-
-            @Override
-            public void surfaceChanged(SurfaceHolder holder, int format, int width, int height) {
-            }
-
-            @Override
-            public void surfaceDestroyed(SurfaceHolder holder) {
-                mCameraSource.stop();
-            }
-        });
-        mBarcodeDetector.setProcessor(new Detector.Processor<Barcode>() {
-            @Override
-            public void release() {
-            }
-
-            @Override
-            public void receiveDetections(Detector.Detections<Barcode> detections) {
-                final SparseArray<Barcode> barcodes = detections.getDetectedItems();
-
-                if (barcodes.size() != 0) {
-                    barcodeInfo.post(new Runnable() {    // Use the post method of the TextView
-                        public void run() {
-                            barcodeInfo.setText(    // Update the TextView
-                                    barcodes.valueAt(0).displayValue
-                            );
-                        }
-                    });
-                }
-            }
-        });
-
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
     }
 
     @Override
@@ -105,6 +62,19 @@ public class MainActivity extends AppCompatActivity{
         return true;
     }
 
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
+        if (scanningResult != null) {
+            String scanContent = scanningResult.getContents();
+            //String scanFormat = scanningResult.getFormatName();
+            barcodeInfo.setText(scanContent);
+        }
+        else{
+            Toast toast = Toast.makeText(getApplicationContext(),
+                    "No scan data received!", Toast.LENGTH_SHORT);
+            toast.show();
+        }
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle action bar item clicks here. The action bar will
@@ -119,4 +89,5 @@ public class MainActivity extends AppCompatActivity{
 
         return super.onOptionsItemSelected(item);
     }
+
 }

@@ -26,20 +26,20 @@
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:padding="16dp">
 
-        <SurfaceView
-            android:layout_width="640px"
-            android:layout_height="480px"
-            android:layout_centerVertical="true"
+        <Button
+            android:layout_width="150dp"
+            android:layout_height="75dp"
             android:layout_centerHorizontal="true"
-            android:id="@+id/camera_view"
-            />
+            android:layout_centerVertical="true"
+            android:id = "@+id/scanButton"
+            android:text="Scan"/>
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/camera_view"
+            android:layout_below="@+id/scanButton"
             android:layout_centerHorizontal="true"
             android:paddingTop="16dp"
-            android:text="No Barcode Detected"
+            android:text="Please scan a barcode"
             android:id="@+id/code_info"/>
 
     </RelativeLayout>
