@@ -1,22 +1,22 @@
 package com.example.nhaydel.naxosscanner;
 
+import android.content.Intent;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
-import android.webkit.WebView;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
-import android.widget.TextView;
+import android.widget.Toast;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -26,7 +26,6 @@ import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
@@ -36,36 +35,38 @@ import javax.net.ssl.X509TrustManager;
 public class NaxosSearch extends AppCompatActivity {
     String author;
     String song;
-    TextView mSongName;
-    WebView webView;
-    TextView mAuthor;
     String artistSearchURL="http://und.naxosmusiclibrary.com.proxy.library.nd.edu/artistlist.asp?filter=";
     String composerURL="http://und.naxosmusiclibrary.com.proxy.library.nd.edu/composer/btm.asp?composerid=";
     List<String> playerLinks = new ArrayList<String>();
     ArrayList<String> worksLinks= new ArrayList<>();
     ListView links;
-    String id;
+    Intent intent;
+    String id, barcode;
+    BarcodesIndex bIndex;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_naxos_search);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-
+        bIndex = BarcodesIndex.getInstance();
         setSupportActionBar(toolbar);
         author = getIntent().getStringExtra("AUTHOR");
         song = getIntent().getStringExtra("SONG");
-        //mSongName = (TextView) findViewById(R.id.song_name);
-        //mAuthor = (TextView) findViewById(R.id.song_author);
-        // mSongName.setText(song);
-        // mAuthor.setText(author);
+        barcode = getIntent().getStringExtra("CODE");
+        intent = new Intent(this, WebViewActivity.class);
         song = song.split(":")[0];
         String url = getArtistURL();
-        try {
-            enableSSLSocket();
-        } catch (Exception e) {
-            System.out.println("Failed to enable SSL con");
+        if (bIndex.get(barcode)!=null){
+            updateUI(bIndex.get(barcode));
         }
-        new GetAuthorLink(url, parseAuthor()).execute();
+        else {
+            try {
+                enableSSLSocket();
+            } catch (Exception e) {
+                System.out.println("Failed to enable SSL con");
+            }
+            new GetAuthorLink(url, parseAuthor()).execute();
+        }
     }
     public String getArtistURL(){
         return artistSearchURL+author.toLowerCase().charAt(0);
@@ -75,6 +76,25 @@ public class NaxosSearch extends AppCompatActivity {
         return terms.get(0)+","+terms.get(1);
     }
 
+    public void updateUI(List<String> songLinks) {
+        links = (ListView) findViewById(R.id.links_list);
+        ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
+                getApplicationContext(),
+                R.layout.link_item,
+                songLinks );
+
+        links.setAdapter(arrayAdapter);
+        findViewById(R.id.spinner).setVisibility(View.GONE);
+        links.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
+                Object item = links.getItemAtPosition(position);
+                String url = (String) item;
+                intent.putExtra("URL",url);
+                startActivity(intent);
+            }
+        });
+    }
 
     public static void enableSSLSocket() throws KeyManagementException, NoSuchAlgorithmException {
         HttpsURLConnection.setDefaultHostnameVerifier(new HostnameVerifier() {
@@ -124,13 +144,19 @@ public class NaxosSearch extends AppCompatActivity {
                         return link.attr("abs:href");
                     }
                 }
-            } catch (IOException e) {
+            } catch (SocketTimeoutException e) {
+                Toast.makeText(getApplicationContext(),"Socket Timeout: Please scan again", Toast.LENGTH_LONG).show();
+                return "Timeout";
+            } catch (Exception e){
                 e.printStackTrace();
             }
             return "Nothing found";
         }
         @Override
         protected void onPostExecute(String result) {
+            if (result=="Timeout"){
+                return;
+            }
             id=getID(result);
             composerURL=composerURL+id;
             new GetSongLink().execute();
@@ -152,13 +178,19 @@ public class NaxosSearch extends AppCompatActivity {
                         return link.attr("abs:href");
                     }
                 }
-            } catch (IOException e) {
+            } catch (SocketTimeoutException e) {
+                Toast.makeText(getApplicationContext(),"Socket Timeout: Please scan again", Toast.LENGTH_LONG).show();
+                return "Timeout";
+            } catch (Exception e){
                 e.printStackTrace();
             }
             return "Nothing found";
         }
         @Override
         protected void onPostExecute(String result) {
+            if (result=="Timeout"){
+                return;
+            }
             new GetWorksLink(result).execute();
         }
     }class GetWorksLink extends AsyncTask<Void,Void,String> {
@@ -185,13 +217,19 @@ public class NaxosSearch extends AppCompatActivity {
                     }
 
                 }
-            } catch (IOException e) {
+            } catch (SocketTimeoutException e) {
+                Toast.makeText(getApplicationContext(),"Socket Timeout: Please scan again", Toast.LENGTH_LONG).show();
+                return "Timeout";
+            } catch (Exception e){
                 e.printStackTrace();
             }
             return "Nothing found";
         }
         @Override
         protected void onPostExecute(String result) {
+            if (result=="Timeout"){
+                return;
+            }
             new GetPlayerLinks().execute();
         }
     }
@@ -220,42 +258,22 @@ public class NaxosSearch extends AppCompatActivity {
                     }
                 }
 
-            } catch (IOException e) {
+            } catch (SocketTimeoutException e) {
+                Toast.makeText(getApplicationContext(),"Socket Timeout: Please scan again", Toast.LENGTH_LONG).show();
+                return "Timeout";
+            } catch (Exception e){
                 e.printStackTrace();
             }
             return "Nothing found";
         }
         @Override
         protected void onPostExecute(String result) {
-            links = (ListView) findViewById(R.id.links_list);
-            ArrayAdapter<String> arrayAdapter = new ArrayAdapter<String>(
-                    getApplicationContext(),
-                    R.layout.link_item,
-                    playerLinks );
+            if (result=="Timeout"){
+                return;
+            }
+            bIndex.add(barcode,playerLinks);
+            updateUI(playerLinks);
 
-            links.setAdapter(arrayAdapter);
-            findViewById(R.id.spinner).setVisibility(View.GONE);
-            links.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-                @Override
-                public void onItemClick(AdapterView<?> arg0, View arg1, int position, long arg3) {
-                    Object item = links.getItemAtPosition(position);
-                    String url = (String) item;
-                    webView = new WebView(getBaseContext());
-                    webView.getSettings().setJavaScriptEnabled(true);
-                    setContentView(webView);
-                    webView.setVisibility(View.VISIBLE);
-                    webView.loadUrl(url);
-                }
-            });
-
-        }
-    }
-    @Override
-    public void onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack();
-        } else {
-                super.onBackPressed();
         }
     }
 

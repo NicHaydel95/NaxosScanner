@@ -1,6 +1,11 @@
 package com.example.nhaydel.naxosscanner;
 
+import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -9,6 +14,8 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
+
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
@@ -19,39 +26,64 @@ import com.google.zxing.integration.android.IntentIntegrator;
 import com.google.zxing.integration.android.IntentResult;
 
 import org.json.JSONObject;
+import org.jsoup.helper.StringUtil;
 
 import java.io.IOException;
 
 
 public class MainActivity extends AppCompatActivity{
-    TextView songAuthor;
-    TextView songName;
     Intent intent;
     Button mScanButton;
+    String barcode;
+    String wifiName;
     IntentIntegrator integrator = new IntentIntegrator(this);
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         mScanButton = (Button) findViewById(R.id.scanButton);
+
         intent = new Intent(this, NaxosSearch.class);
         mScanButton.setOnClickListener(new View.OnClickListener(){
             public void onClick(View v){
-                integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
-                integrator.setPrompt("Scan a barcode");
-                integrator.setCameraId(0);  // Use a specific camera of the device
-                integrator.setOrientationLocked(false);
-                integrator.setCaptureActivity(CaptureActivityPortrait.class);
-                integrator.setBeepEnabled(false);
-                integrator.initiateScan();
+                wifiName = getSSID();
+                wifiName = wifiName.substring(1,wifiName.length()-1); //Remove quotes around name
+                if(wifiName.equals("ND-secure")) {
+                    integrator.setDesiredBarcodeFormats(IntentIntegrator.ONE_D_CODE_TYPES);
+                    integrator.setPrompt("Scan a barcode");
+                    integrator.setCameraId(0);  // Use a specific camera of the device
+                    integrator.setOrientationLocked(false);
+                    integrator.setCaptureActivity(CaptureActivityPortrait.class);
+                    integrator.setBeepEnabled(false);
+                    integrator.initiateScan();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(),"Must be connected to ND-secure",Toast.LENGTH_LONG).show();
+                }
 
             }
         });
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        //songAuthor = (TextView) findViewById(R.id.song_author);
-        //songName = (TextView) findViewById(R.id.song_name);
+    }
+
+    public String getSSID(){
+        String ssid = null;
+        Context context = getApplicationContext();
+        ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo networkInfo = cm.getActiveNetworkInfo();
+        if (networkInfo == null) {
+            return null;
+        }
+        if (networkInfo.isConnected()) {
+            final WifiManager wifiManager = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
+            final WifiInfo connectionInfo = wifiManager.getConnectionInfo();
+            if (connectionInfo != null && !StringUtil.isBlank(connectionInfo.getSSID())) {
+                ssid = connectionInfo.getSSID();
+            }
+        }
+        return ssid;
     }
 
     @Override
@@ -63,7 +95,7 @@ public class MainActivity extends AppCompatActivity{
 
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         IntentResult scanningResult = IntentIntegrator.parseActivityResult(requestCode, resultCode, intent);
-        String scanContent = scanningResult.getContents();
+        barcode = scanningResult.getContents();
         /*RequestQueue queue = Volley.newRequestQueue(this);
         String url = "API URL HERE";
 
@@ -100,16 +132,12 @@ public class MainActivity extends AppCompatActivity{
     public void searchPage(String title, String author){
         intent.putExtra("AUTHOR", author);
         intent.putExtra("SONG", title);
+        intent.putExtra("CODE",barcode);
         startActivity(intent);
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
         }
