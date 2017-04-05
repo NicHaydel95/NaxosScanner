@@ -25,24 +25,24 @@
     <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
         android:layout_width="match_parent" android:layout_height="match_parent"
         android:padding="16dp">
-        <TextView
+        <ProgressBar
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerHorizontal="true"
             android:layout_centerVertical="true"
-
-            android:paddingTop="16dp"
-            android:text="Song Name"
-            android:id="@+id/song_name"/>
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_below="@+id/song_name"
-            android:layout_centerHorizontal="true"
-            android:paddingTop="16dp"
-            android:text="Author"
-            android:id="@+id/song_author"/>
+            android:indeterminate="true"
+            android:id="@+id/spinner"/>
 
     </RelativeLayout>
+
+    <WebView android:id="@+id/webview"
+        android:layout_height="fill_parent"
+        android:layout_width="fill_parent"
+        android:visibility="invisible"/>
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:layout_behavior="@string/appbar_scrolling_view_behavior"
+        android:id="@+id/links_list"></ListView>
 
 </android.support.design.widget.CoordinatorLayout>

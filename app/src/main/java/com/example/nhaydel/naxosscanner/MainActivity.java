@@ -50,8 +50,8 @@ public class MainActivity extends AppCompatActivity{
 
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        songAuthor = (TextView) findViewById(R.id.song_author);
-        songName = (TextView) findViewById(R.id.song_name);
+        //songAuthor = (TextView) findViewById(R.id.song_author);
+        //songName = (TextView) findViewById(R.id.song_name);
     }
 
     @Override
