@@ -2,6 +2,19 @@
 
 Given a score from Hesburgh Libraries, this application allows its users to scan the barcode of the score and retrieve links to recordings of that score.  
 
+## Setting up Android Studio
+
+To install Android Studio:
+1. Download the appropriate version from here: https://developer.android.com/studio/index.html
+1. Follow the installation instructions found here: https://developer.android.com/studio/install.html
+
+### Deploying the App
+
+1. Connect the phone to your computer
+1. Click the run app icon in Android Studio
+1. Select the connected device
+1. Click 'OK'
+
 ## Use
 1. Press the scan button on the opening screen of the app
 1. Scan the University Libraries of Notre Dame barcode located on the back cover of the score
