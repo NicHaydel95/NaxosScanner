@@ -16,6 +16,7 @@ To install Android Studio:
 1. Click 'OK'
 
 ## Use
+![alt "workflow"](https://raw.githubusercontent.com/ndlib/NaxosScanner/master/Barcode%20Scanner%20-%20Page%201.png)
 1. Press the scan button on the opening screen of the app
 1. Scan the University Libraries of Notre Dame barcode located on the back cover of the score
 1. Once the app retrieves all available recordings, choose a recording from the list
